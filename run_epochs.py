@@ -1,6 +1,7 @@
 import sys, os
 import numpy as np
 from itertools import cycle
+import tqdm
 import json
 import random
 import torch
@@ -44,7 +45,7 @@ def calc_log_probs(exp, result, batch):
     for m, m_key in enumerate(mods.keys()):
         mod = mods[m_key]
         log_probs[mod.name] = -mod.calc_log_prob(result['rec'][mod.name],
-                                                 batch[0][mod.name],
+                                                 batch[mod.name],
                                                  exp.flags.batch_size);
         weighted_log_prob += exp.rec_weights[mod.name]*log_probs[mod.name];
     return log_probs, weighted_log_prob;
@@ -104,8 +105,8 @@ def basic_routine_epoch(exp, batch):
     rec_weight = 1.0;
 
     mm_vae = exp.mm_vae;
-    batch_d = batch[0];
-    batch_l = batch[1];
+    batch_d = batch
+    # batch_l = batch[1];
     mods = exp.modalities;
     for k, m_key in enumerate(batch_d.keys()):
         batch_d[m_key] = Variable(batch_d[m_key]).to(exp.flags.device);
@@ -119,7 +120,7 @@ def basic_routine_epoch(exp, batch):
         klds_style = calc_klds_style(exp, results);
 
 
-    if exp.flags.modality_ivw or exp.flags.modality_ivw2:
+    if exp.flags.modality_ivw:
         if exp.flags.factorized_representation:
             kld_style = calc_style_kld(exp, klds_style);
         else:
@@ -232,18 +233,18 @@ def test(epoch, exp, tb_logger):
             log_probs = basic_routine['log_probs'];
         tb_logger.write_testing_logs(results, total_loss, log_probs, klds);
 
-        plots = generate_plots(exp, epoch);
-        tb_logger.write_plots(plots, epoch);
+        # plots = generate_plots(exp, epoch);
+        # tb_logger.write_plots(plots, epoch);
 
         if (epoch + 1) % exp.flags.eval_freq == 0:
-            if exp.flags.eval_lr:
-                clf_lr = train_clf_lr_all_subsets(exp);
-                lr_eval = test_clf_lr_all_subsets(epoch, clf_lr, exp);
-                tb_logger.write_lr_eval(lr_eval);
+            # if exp.flags.eval_lr:
+            #     clf_lr = train_clf_lr_all_subsets(exp);
+            #     lr_eval = test_clf_lr_all_subsets(epoch, clf_lr, exp);
+            #     tb_logger.write_lr_eval(lr_eval);
 
-            if exp.flags.use_clf:
-                gen_eval = test_generation(epoch, exp);
-                tb_logger.write_coherence_logs(gen_eval);
+            # if exp.flags.use_clf:
+            #     gen_eval = test_generation(epoch, exp);
+            #     tb_logger.write_coherence_logs(gen_eval);
 
             if exp.flags.calc_nll:
                 lhoods = estimate_likelihoods(exp);
@@ -266,8 +267,8 @@ def run_epochs(exp):
     tb_logger.writer.add_text('FLAGS', str_flags, 0)
 
     print('training epochs progress:')
-    for epoch in range(exp.flags.start_epoch, exp.flags.end_epoch):
-        utils.printProgressBar(epoch, exp.flags.end_epoch)
+    for epoch in tqdm.tqdm(range(exp.flags.start_epoch, exp.flags.end_epoch)):
+        # utils.printProgressBar(epoch, exp.flags.end_epoch)
 
         train(epoch, exp, tb_logger);
         if (epoch + 1) % 5 == 0:# or (epoch + 1) == exp.flags.end_epoch:

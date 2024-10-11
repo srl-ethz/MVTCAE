@@ -49,7 +49,7 @@ parser.add_argument('--load_saved', type=bool, default=False, help="flag to indi
 parser.add_argument('--inception_state_dict', type=str, default='.', help="path to inception v3 state dict")
 
 # EVALUATION
-parser.add_argument('--use_clf', default=True, action="store_true",
+parser.add_argument('--use_clf', default=False, action="store_true",
                     help="flag to indicate if generates samples should be classified")
 parser.add_argument('--calc_nll', default=False, action="store_true",
                     help="flag to indicate calculation of nll")
